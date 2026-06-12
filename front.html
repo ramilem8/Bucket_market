@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaskBloom — İş & Mağaza</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --pink: #e75480;
+    --pink-light: #fce4ec;
+    --green: #43a047;
+    --green-light: #e8f5e9;
+    --gold: #f9a825;
+    --gold-light: #fff8e1;
+    --gray: #6b7280;
+    --gray-light: #f3f4f6;
+    --white: #ffffff;
+    --text: #1f2937;
+    --text-muted: #6b7280;
+    --border: #e5e7eb;
+    --radius: 12px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #fdf6f9; color: var(--text); min-height: 100vh; }
+
+  header {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: var(--shadow);
+  }
+  header h1 { font-size: 1.4rem; font-weight: 700; color: var(--pink); letter-spacing: -0.5px; }
+  header h1 span { color: var(--green); }
+  .balance-badge {
+    background: var(--gold-light);
+    border: 1.5px solid var(--gold);
+    border-radius: 999px;
+    padding: 0.4rem 1.1rem;
+    font-weight: 700;
+    font-size: 1rem;
+    color: #b45309;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .main-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    max-width: 1100px;
+    margin: 2rem auto;
+    padding: 0 1.5rem 3rem;
+  }
+  @media (max-width: 700px) { .main-layout { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--white);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+  }
+  .panel-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel-title .icon { font-size: 1.2rem; }
+
+  /* TODO */
+  .add-task-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 1rem;
+  }
+  .add-task-row input {
+    flex: 1;
+    padding: 0.55rem 0.9rem;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .add-task-row input:focus { border-color: var(--pink); }
+  .add-task-row select {
+    padding: 0.55rem 0.6rem;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    outline: none;
+    background: var(--white);
+  }
+  .btn {
+    padding: 0.55rem 1rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-pink { background: var(--pink); color: white; }
+  .btn-pink:hover { opacity: 0.88; }
+  .btn-green { background: var(--green); color: white; }
+  .btn-green:hover { opacity: 0.88; }
+
+  .task-list { display: flex; flex-direction: column; gap: 8px; }
+  .task-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0.65rem 0.9rem;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--white);
+    cursor: pointer;
+    transition: background 0.15s;
+    user-select: none;
+  }
+  .task-item.done {
+    background: var(--green-light);
+    border-color: #a7d7a9;
+  }
+  .task-item.done .task-text {
+    text-decoration: line-through;
+    color: var(--text-muted);
+  }
+  .task-check {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    color: white;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .task-item.done .task-check { background: var(--green); border-color: var(--green); }
+  .task-text { flex: 1; font-size: 0.95rem; }
+  .task-reward {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #b45309;
+    background: var(--gold-light);
+    border-radius: 999px;
+    padding: 2px 9px;
+  }
+  .task-del {
+    background: none; border: none; cursor: pointer;
+    color: #d1d5db; font-size: 1.1rem; padding: 0 2px;
+    line-height: 1;
+  }
+  .task-del:hover { color: #ef4444; }
+  .empty-msg { text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 1.5rem 0; }
+
+  /* SHOP */
+  .shop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+  }
+  .shop-item {
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 0.8rem 0.7rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    background: var(--white);
+  }
+  .shop-item:hover { border-color: var(--pink); background: var(--pink-light); }
+  .shop-item.in-cart { border-color: var(--green); background: var(--green-light); }
+  .shop-emoji { font-size: 2rem; margin-bottom: 6px; }
+  .shop-name { font-size: 0.82rem; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .shop-price { font-size: 0.78rem; color: #b45309; font-weight: 700; }
+
+  .cart-section { margin-top: 1.2rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+  .cart-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 8px; color: var(--text-muted); }
+  .cart-items { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .cart-tag {
+    display: flex; align-items: center; gap: 5px;
+    background: var(--pink-light);
+    border: 1px solid #f5b8ca;
+    border-radius: 999px;
+    padding: 3px 10px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #9d174d;
+  }
+  .cart-tag button { background: none; border: none; cursor: pointer; color: #f472b6; font-size: 1rem; line-height: 1; padding: 0; }
+  .cart-total {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+  .cart-total span { color: var(--pink); }
+
+  /* PACKAGING MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 500;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 420px;
+    width: 90%;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    animation: slideUp 0.22s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal h2 { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.3rem; }
+  .modal .subtitle { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.2rem; }
+  .packaging-info {
+    background: var(--pink-light);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1.2rem;
+    font-size: 0.9rem;
+  }
+  .packaging-info p { margin-bottom: 4px; }
+  .packaging-info strong { color: var(--pink); }
+  .modal label { font-size: 0.88rem; font-weight: 600; display: block; margin-bottom: 5px; color: var(--text-muted); }
+  .modal input[type=text] {
+    width: 100%;
+    padding: 0.6rem 0.9rem;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    outline: none;
+    margin-bottom: 1rem;
+  }
+  .modal input[type=text]:focus { border-color: var(--pink); }
+  .modal-btns { display: flex; gap: 10px; }
+
+  .link-box {
+    background: var(--gray-light);
+    border-radius: 8px;
+    padding: 0.6rem 0.9rem;
+    font-size: 0.82rem;
+    font-family: monospace;
+    color: var(--text);
+    word-break: break-all;
+    margin-bottom: 0.8rem;
+    border: 1.5px solid var(--border);
+  }
+  .copy-success {
+    color: var(--green);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: -0.5rem;
+    margin-bottom: 0.5rem;
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Task<span>Bloom</span> 🌸</h1>
+  <div class="balance-badge">💰 <span id="balance-display">0</span> qəpik</div>
+</header>
+
+<div class="main-layout">
+  <!-- TODO PANEL -->
+  <div class="panel">
+    <div class="panel-title">
+      <span class="icon">✅</span> Gündəlik tapşırıqlar
+    </div>
+
+    <div class="add-task-row">
+      <input type="text" id="task-input" placeholder="Tapşırıq yaz..." />
+      <select id="task-reward-select">
+        <option value="5">5 q</option>
+        <option value="10" selected>10 q</option>
+        <option value="20">20 q</option>
+        <option value="50">50 q</option>
+        <option value="100">100 q</option>
+      </select>
+      <button class="btn btn-pink" onclick="addTask()">+ Əlavə et</button>
+    </div>
+
+    <div class="task-list" id="task-list">
+      <div class="empty-msg" id="empty-todo">Hələ tapşırıq yoxdur. Yuxarıdan əlavə et! 🌱</div>
+    </div>
+  </div>
+
+  <!-- SHOP PANEL -->
+  <div class="panel">
+    <div class="panel-title">
+      <span class="icon">🛍️</span> Hədiyyə mağazası
+    </div>
+
+    <div class="shop-grid" id="shop-grid"></div>
+
+    <div class="cart-section">
+      <div class="cart-title">🛒 Seçilmişlər</div>
+      <div class="cart-items" id="cart-items">
+        <span style="font-size:0.82rem;color:var(--text-muted)">Hələ heç nə seçilməyib</span>
+      </div>
+      <div class="cart-total">Cəm: <span id="cart-total">0</span> qəpik</div>
+      <button class="btn btn-green" onclick="checkout()">🎁 Sifariş ver</button>
+    </div>
+  </div>
+</div>
+
+<!-- PACKAGING MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2>🎀 Qablaşdırma hazır!</h2>
+    <p class="subtitle" id="modal-subtitle"></p>
+
+    <div class="packaging-info" id="packaging-info"></div>
+
+    <label>Hədiyyə kimə çatmalıdır?</label>
+    <input type="text" id="recipient-name" placeholder="Adı yazın..." />
+
+    <div id="link-section" style="display:none;">
+      <label>Paylaşma linki:</label>
+      <div class="link-box" id="link-box"></div>
+      <div class="copy-success" id="copy-success">✅ Kopyalandı!</div>
+      <div class="modal-btns">
+        <button class="btn btn-pink" onclick="copyLink()">📋 Kopyala</button>
+        <button class="btn" style="background:var(--gray-light);color:var(--text);" onclick="closeModal()">Bağla</button>
+      </div>
+    </div>
+
+    <div id="gen-btn-section">
+      <div class="modal-btns">
+        <button class="btn btn-green" onclick="generateLink()">🔗 Link yarat</button>
+        <button class="btn" style="background:var(--gray-light);color:var(--text);" onclick="closeModal()">Ləğv et</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SHOP_ITEMS = [
+  { id: 'gul_qizilgul',  name: 'Qızılgül',       emoji: '🌹', price: 30,  type: 'gul' },
+  { id: 'gul_orxideya',  name: 'Orxideya',        emoji: '🌸', price: 40,  type: 'gul' },
+  { id: 'gul_cobanyast', name: 'Çobanyastığı',    emoji: '💐', price: 25,  type: 'gul' },
+  { id: 'gul_lale',      name: 'Lalə',             emoji: '🌷', price: 28,  type: 'gul' },
+  { id: 'hed_qarku',     name: 'Qar kürəsi',       emoji: '🔮', price: 80,  type: 'hediyye' },
+  { id: 'hed_ayiciq',    name: 'Oyuncaq ayı',      emoji: '🧸', price: 60,  type: 'hediyye' },
+  { id: 'hed_pishik',    name: 'Oyuncaq pişik',    emoji: '🐱', price: 55,  type: 'hediyye' },
+  { id: 'hed_it',        name: 'Oyuncaq it',       emoji: '🐶', price: 55,  type: 'hediyye' },
+  { id: 'hed_hotwheels', name: 'Hot Wheels',       emoji: '🏎️', price: 50,  type: 'hediyye' },
+  { id: 'hed_saat',      name: 'Qol saatı',        emoji: '⌚', price: 150, type: 'hediyye' },
+];
+
+let balance = parseInt(localStorage.getItem('taskbloom_balance') || '0');
+let tasks = JSON.parse(localStorage.getItem('taskbloom_tasks') || '[]');
+let cart = [];
+
+function saveData() {
+  localStorage.setItem('taskbloom_balance', balance);
+  localStorage.setItem('taskbloom_tasks', JSON.stringify(tasks));
+}
+
+function updateBalanceDisplay() {
+  document.getElementById('balance-display').textContent = balance;
+}
+
+// ---------- TASKS ----------
+function renderTasks() {
+  const list = document.getElementById('task-list');
+  const empty = document.getElementById('empty-todo');
+  list.querySelectorAll('.task-item').forEach(el => el.remove());
+
+  if (tasks.length === 0) {
+    empty.style.display = '';
+    return;
+  }
+  empty.style.display = 'none';
+
+  tasks.forEach((t, i) => {
+    const div = document.createElement('div');
+    div.className = 'task-item' + (t.done ? ' done' : '');
+    div.innerHTML = `
+      <div class="task-check">${t.done ? '✓' : ''}</div>
+      <span class="task-text">${escHtml(t.text)}</span>
+      <span class="task-reward">+${t.reward} q</span>
+      <button class="task-del" title="Sil" onclick="deleteTask(${i}, event)">×</button>
+    `;
+    div.addEventListener('click', () => toggleTask(i));
+    list.appendChild(div);
+  });
+}
+
+function addTask() {
+  const input = document.getElementById('task-input');
+  const rewardSel = document.getElementById('task-reward-select');
+  const text = input.value.trim();
+  if (!text) { input.focus(); return; }
+  tasks.push({ text, reward: parseInt(rewardSel.value), done: false });
+  input.value = '';
+  saveData();
+  renderTasks();
+}
+
+function toggleTask(i) {
+  if (tasks[i].done) return;
+  tasks[i].done = true;
+  balance += tasks[i].reward;
+  saveData();
+  updateBalanceDisplay();
+  renderTasks();
+}
+
+function deleteTask(i, e) {
+  e.stopPropagation();
+  if (tasks[i].done) balance = Math.max(0, balance - tasks[i].reward);
+  tasks.splice(i, 1);
+  saveData();
+  updateBalanceDisplay();
+  renderTasks();
+}
+
+document.getElementById('task-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addTask();
+});
+
+// ---------- SHOP ----------
+function renderShop() {
+  const grid = document.getElementById('shop-grid');
+  grid.innerHTML = '';
+  SHOP_ITEMS.forEach(item => {
+    const div = document.createElement('div');
+    const inCart = cart.some(c => c.id === item.id);
+    div.className = 'shop-item' + (inCart ? ' in-cart' : '');
+    div.innerHTML = `
+      <div class="shop-emoji">${item.emoji}</div>
+      <div class="shop-name">${item.name}</div>
+      <div class="shop-price">${item.price} qəpik</div>
+    `;
+    div.addEventListener('click', () => toggleCart(item));
+    grid.appendChild(div);
+  });
+}
+
+function toggleCart(item) {
+  const idx = cart.findIndex(c => c.id === item.id);
+  if (idx >= 0) cart.splice(idx, 1);
+  else cart.push(item);
+  renderShop();
+  renderCart();
+}
+
+function renderCart() {
+  const container = document.getElementById('cart-items');
+  const totalEl = document.getElementById('cart-total');
+  container.innerHTML = '';
+  if (cart.length === 0) {
+    container.innerHTML = '<span style="font-size:0.82rem;color:var(--text-muted)">Hələ heç nə seçilməyib</span>';
+    totalEl.textContent = '0';
+    return;
+  }
+  cart.forEach(item => {
+    const tag = document.createElement('div');
+    tag.className = 'cart-tag';
+    tag.innerHTML = `${item.emoji} ${item.name} (${item.price}q) <button onclick="toggleCart(${JSON.stringify(item).replace(/"/g,"'")})">×</button>`;
+    container.appendChild(tag);
+  });
+  totalEl.textContent = cart.reduce((s, i) => s + i.price, 0);
+}
+
+function checkout() {
+  if (cart.length === 0) { alert('Zəhmət olmasa mağazadan bir şey seçin!'); return; }
+  const total = cart.reduce((s, i) => s + i.price, 0);
+  if (balance < total) {
+    alert(`Balansınız kifayət deyil! Lazım: ${total} q, Balansınız: ${balance} q`);
+    return;
+  }
+  showPackagingModal();
+}
+
+// ---------- MODAL ----------
+function showPackagingModal() {
+  const hasFlowers = cart.some(i => i.type === 'gul');
+  const hasGifts = cart.some(i => i.type === 'hediyye');
+
+  let packText = '';
+  let subtitle = '';
+
+  if (hasFlowers && hasGifts) {
+    packText = `🌸 Güllər <strong>buketə</strong>, 🎁 Hədiyyələr <strong>qutuya</strong> yığılacaq — hər şey öz qabına!`;
+    subtitle = 'Gül + Hədiyyə kombinasiyası';
+  } else if (hasFlowers) {
+    packText = `🌸 Seçdiyiniz güllər <strong>gözəl bir buketə</strong> yığılacaq.`;
+    subtitle = 'Buket qablaşdırması';
+  } else {
+    packText = `🎁 Seçdiyiniz hədiyyələr <strong>bəzəkli qutuya</strong> yığılacaq.`;
+    subtitle = 'Hədiyyə qutusu';
+  }
+
+  const items = cart.map(i => `${i.emoji} ${i.name}`).join(', ');
+  const total = cart.reduce((s, i) => s + i.price, 0);
+
+  document.getElementById('modal-subtitle').textContent = subtitle;
+  document.getElementById('packaging-info').innerHTML = `
+    <p><strong>Məhsullar:</strong> ${items}</p>
+    <p><strong>Cəm məbləğ:</strong> ${total} qəpik</p>
+    <p style="margin-top:8px;">${packText}</p>
+  `;
+  document.getElementById('recipient-name').value = '';
+  document.getElementById('link-section').style.display = 'none';
+  document.getElementById('gen-btn-section').style.display = '';
+  document.getElementById('copy-success').style.display = 'none';
+  document.getElementById('modal').classList.add('active');
+}
+
+function generateLink() {
+  const name = document.getElementById('recipient-name').value.trim();
+  if (!name) { document.getElementById('recipient-name').focus(); return; }
+
+  const total = cart.reduce((s, i) => s + i.price, 0);
+  balance -= total;
+  saveData();
+  updateBalanceDisplay();
+
+  const payload = {
+    to: name,
+    items: cart.map(i => ({ emoji: i.emoji, name: i.name, type: i.type })),
+    total,
+    date: new Date().toLocaleDateString('az-AZ')
+  };
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+  const link = `${location.href.split('?')[0]}?hediyye=${encoded}`;
+
+  document.getElementById('link-box').textContent = link;
+  document.getElementById('link-section').style.display = '';
+  document.getElementById('gen-btn-section').style.display = 'none';
+
+  cart = [];
+  renderShop();
+  renderCart();
+}
+
+function copyLink() {
+  const link = document.getElementById('link-box').textContent;
+  navigator.clipboard.writeText(link).then(() => {
+    const el = document.getElementById('copy-success');
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 2000);
+  });
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('active');
+}
+
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ---------- GIFT VIEW (linke baxanda) ----------
+function checkGiftParam() {
+  const params = new URLSearchParams(location.search);
+  const encoded = params.get('hediyye');
+  if (!encoded) return;
+
+  try {
+    const data = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+    const hasFlowers = data.items.some(i => i.type === 'gul');
+    const hasGifts = data.items.some(i => i.type === 'hediyye');
+
+    let packMsg = '';
+    if (hasFlowers && hasGifts) packMsg = '🌸 Güllər buketdə · 🎁 Hədiyyələr qutuda';
+    else if (hasFlowers) packMsg = '🌸 Gözəl bir buketdə hazırlanıb';
+    else packMsg = '🎁 Bəzəkli qutuda hazırlanıb';
+
+    document.body.innerHTML = `
+      <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#fce4ec,#fff8e1);font-family:'Segoe UI',system-ui,sans-serif;">
+        <div style="background:white;border-radius:20px;padding:2.5rem 2rem;max-width:400px;width:90%;text-align:center;box-shadow:0 8px 40px rgba(231,84,128,0.15);">
+          <div style="font-size:3rem;margin-bottom:1rem;">🎀</div>
+          <h1 style="font-size:1.5rem;font-weight:800;color:#e75480;margin-bottom:0.3rem;">Sənin üçün hədiyyə!</h1>
+          <p style="color:#6b7280;font-size:0.9rem;margin-bottom:1.5rem;">Hazırlanma tarixi: ${data.date}</p>
+          <div style="background:#fce4ec;border-radius:12px;padding:1.2rem;margin-bottom:1.2rem;text-align:left;">
+            <p style="font-weight:700;margin-bottom:8px;color:#9d174d;">📦 Qablaşdırma:</p>
+            <p style="font-size:0.9rem;color:#be185d;margin-bottom:8px;">${packMsg}</p>
+            <p style="font-weight:700;margin-bottom:6px;color:#9d174d;">🎁 İçindəkilər:</p>
+            ${data.items.map(i => `<p style="font-size:0.95rem;padding:3px 0;">${i.emoji} ${i.name}</p>`).join('')}
+          </div>
+          <p style="font-size:1.1rem;font-weight:700;color:#e75480;">Sevgiylə, TaskBloom 🌸</p>
+          <p style="font-size:0.8rem;color:#9ca3af;margin-top:0.5rem;">Bu hədiyyəni xüsusi bir insan göndərdi 💝</p>
+        </div>
+      </div>
+    `;
+  } catch(e) {
+    console.error('Gift decode error', e);
+  }
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// INIT
+checkGiftParam();
+updateBalanceDisplay();
+renderTasks();
+renderShop();
+renderCart();
+</script>
+</body>
+</html>
